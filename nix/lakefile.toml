@@ -1,9 +1,9 @@
-name = "Notes"
+name = "Document"
 version = "0.1.0"
 keywords = ["math"]
 
 [leanOptions]
-pp.unicode.fun = true          # pretty-prints `fun a ↦ b`
+pp.unicode.fun = true
 relaxedAutoImplicit = false
 maxSynthPendingDepth = 3
 linter.unusedVariables = false
@@ -15,3 +15,16 @@ rev = "v4.29.0"
 
 [[lean_lib]]
 name = "Document"
+
+[[lean_lib]]
+name = "Infra"
+
+# Not used by nix
+[[lean_exe]]
+name = "doc"
+root = "Infra.Main"
+
+[[require]]
+name = "verso"
+git = "https://github.com/leanprover/verso"
+rev = "v4.29.0"

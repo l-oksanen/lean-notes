@@ -1,0 +1,31 @@
+{
+  "pins": {
+    "lean-blog": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "xhalo32",
+        "repo": "lean-blog"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "5f935f53ff55e1e34678c8334200f28d4fd7e95b",
+      "url": "https://github.com/xhalo32/lean-blog/archive/5f935f53ff55e1e34678c8334200f28d4fd7e95b.tar.gz",
+      "hash": "sha256-Q47NEdppyoHfsNOtxsXkPQ4id0s48F/Elzer99848ns="
+    },
+    "nixpkgs": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nixos",
+        "repo": "nixpkgs"
+      },
+      "branch": "nixos-unstable",
+      "submodules": false,
+      "revision": "4c1018dae018162ec878d42fec712642d214fdfa",
+      "url": "https://github.com/nixos/nixpkgs/archive/4c1018dae018162ec878d42fec712642d214fdfa.tar.gz",
+      "hash": "sha256-ar3rofg+awPB8QXDaFJhJ2jJhu+KqN/PRCXeyuXR76E="
+    }
+  },
+  "version": 7
+}
