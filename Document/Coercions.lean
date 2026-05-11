@@ -37,29 +37,6 @@ example (x : Nat') (y : Nat) : Nat' := x + y
 /-
 
 
-# Numeric literals
-
-Coercions are not used to resolve numeric literals.
-```lean +error
-example : Nat' := 0
-```
-
-Instead, the numeric literal parser is guided by `OfNat` type class.
--/
-instance (n : Nat) : OfNat Nat' n where
-  ofNat := n
-
-example : Nat' := 0
-/-
-
-We can now compute in `Nat'` using numeric literals with type annotation.
--/
-#reduce (2 : Nat')
-
-example : (2 : Nat') + (2 : Nat') = (4 : Nat') := rfl
-/-
-
-
 # Subtypes
 
 `Subtype` is a structure similar to `Prod`. It takes a predicate as a parameter and comes with syntactic sugar.

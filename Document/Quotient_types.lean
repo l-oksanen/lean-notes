@@ -135,7 +135,7 @@ example (α : Sort u) (s : Setoid α) (a : α) :
 
 We introduce `0` as an integer.
 -/
-def Z.zero : Z := ⟦(Nat'.zero, Nat'.zero)⟧
+def Z.zero : Z := ⟦(0, 0)⟧
 /-
 
 
@@ -174,12 +174,12 @@ example (n k : Nat')
   (h : n = k)
   : ⟦(n, k)⟧ = Z.zero
 :=
-  have : (n, k) ≈ (zero, zero) := calc
-    n + zero
-    _ = zero + n := add_comm
+  have : (n, k) ≈ (0, 0) := calc
+    n + 0
+    _ = 0 + n := add_comm
     _ = n := zero_add
     _ = k := h
-    _ = zero + k := zero_add.symm
+    _ = 0 + k := zero_add.symm
   Quotient.sound this
 /-
 
@@ -201,11 +201,11 @@ example (n k : Nat')
   (h : ⟦(n, k)⟧ = Z.zero)
   : n = k
 :=
-  have : (n, k) ≈ (zero, zero) := Quotient.exact h
+  have : n + 0 = 0 + k := Quotient.exact h
   calc
-    n = zero + n := zero_add.symm
-    _ = n + zero := add_comm
-    _ = zero + k := this
+    n = 0 + n := zero_add.symm
+    _ = n + 0 := add_comm
+    _ = 0 + k := this
     _ = k := zero_add
 /-
 
@@ -213,15 +213,15 @@ Positive integers were described {ref "sec-quotient-types"}[above] as equivalenc
 -/
 open Nat' in
 example (n m : Nat')
-  (h : (⟦(n, zero)⟧ : Z) = ⟦(m, zero)⟧)
+  (h : (⟦(n, 0)⟧ : Z) = ⟦(m, 0)⟧)
   : n = m
 :=
-  have : (n, zero) ≈ (m, zero) := Quotient.exact h
+  have : n + 0 = m + 0 := Quotient.exact h
   calc
-    n = zero + n := zero_add.symm
-    _ = n + zero := add_comm
-    _ = m + zero := this
-    _ = zero + m := add_comm
+    n = 0 + n := zero_add.symm
+    _ = n + 0 := add_comm
+    _ = m + 0 := this
+    _ = 0 + m := add_comm
     _ = m := zero_add
 /-
 
@@ -237,7 +237,6 @@ example (α : Sort u) (r : α → α → Prop) (β : Sort v)
   (h : ∀ (x y : α), r x y → f x = f y) :
   β := Quot.lift f h q
 /-
-
 The variant `Quotient.lift` is parametrized by a setoid.
 -/
 example (α : Sort u) (β : Sort v) (s : Setoid α)
@@ -406,7 +405,7 @@ def N2.add (p₁ p₂ : Nat' × Nat') :=
 
 open Nat' in
 lemma N2.add_resp_r {p₁ q₁ p₂ q₂ : Nat' × Nat'}
-  (h1 : p₁ ≈ q₁) (h2 : p₂ ≈ q₂)
+  (hp : p₁ ≈ q₁) (hq : p₂ ≈ q₂)
   : add p₁ p₂ ≈ add q₁ q₂
 :=
   let ⟨n₁, k₁⟩ := p₁
@@ -421,22 +420,19 @@ lemma N2.add_resp_r {p₁ q₁ p₂ q₂ : Nat' × Nat'}
   calc
     (n₁ + n₂) + (l₁ + l₂)
     _ = (n₁ + l₁) + (n₂ + l₂) := this
-    _ = (m₁ + k₁) + (n₂ + l₂) := congrArg (· + (n₂ + l₂)) h1
-    _ = (m₁ + k₁) + (m₂ + k₂) := congrArg ((m₁ + k₁) + ·) h2
+    _ = (m₁ + k₁) + (n₂ + l₂) := congrArg (· + (n₂ + l₂)) hp
+    _ = (m₁ + k₁) + (m₂ + k₂) := congrArg ((m₁ + k₁) + ·) hq
     _ = (m₁ + m₂) + (k₁ + k₂) := this.symm
 
 def Z.add := Quotient.lift₂
   (λ p q ↦ ⟦N2.add p q⟧)
-  (λ _ _ _ _ hx hy ↦ Quotient.sound (N2.add_resp_r hx hy))
+  (λ _ _ _ _ hp hq ↦ Quotient.sound (N2.add_resp_r hp hq))
 /-
 
-We can now show that `1 - 1 = 0`. Using `Quotient.sound`, it remains to show `(1, 0) + (0, 1) ≈ (0, 0)`, which reduces to `(1, 1) ≈ (0, 0)` and further to `1 + 0 = 0 + 1`. These hold by `rfl`.
+We can now show that `1 - 1 = 0`.
 -/
-def Z.one : Z := ⟦(Nat'.zero.succ, Nat'.zero)⟧
-def Z.minus_one : Z := ⟦(Nat'.zero, Nat'.zero.succ)⟧
-
 open Z in
-example : Z.add one minus_one = zero := Quotient.sound rfl
+example : add ⟦(1, 0)⟧ ⟦(0, 1)⟧ = zero := Quotient.sound rfl
 /-
 
 The standard integers `Int` are not defined as a quotient, but as an inductive type with separate constructors for non-negative and negative cases. Consequently, computing with them does not require the quotient axiom, as we have {ref "sec-definitional-equality-naive"}[seen].

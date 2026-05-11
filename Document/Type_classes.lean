@@ -152,6 +152,25 @@ The `+` notation on `Nat'` is resolved via two instances, the above unnamed inst
 /-
 
 
+# Numeric literals
+
+The numeric literal parser is guided by `OfNat` type class.
+-/
+instance (n : Nat) : OfNat Nat' n where
+  ofNat := Nat.rec Nat'.zero (λ _ hi ↦ hi.succ) n
+
+example : Nat'.zero = 0 := rfl
+example : Nat'.zero.succ = 1 := rfl
+/-
+
+We can now compute in `Nat'` using numeric literals with type annotation.
+-/
+#reduce (2 : Nat')
+
+example : (2 : Nat') + (2 : Nat') = (4 : Nat') := rfl
+/-
+
+
 # Class hierarchy
 
 Lean has parallel hierarchies for additive and multiplicative notation. We will consider the hierarchy rooted at `Add`. The mathematical concept corresponding to the root `Add` is [magma][magma]. A [semigroup][semigroup] is a magma whose binary operation is associative. {index}[extends]
