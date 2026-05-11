@@ -184,9 +184,13 @@ Lean has parallel hierarchies for additive and multiplicative notation. We will 
 class AddSemigroup' (G : Type u) extends Add' G where
   add_assoc : ∀ a b c : G, (a + b) + c = a + (b + c)
 /-
-The `extends` clause makes `AddSemigroup'` inherit the fields from `Add'`, and `add_assoc` is stated in terms of the inherited `+`. If there is an expression of type `AddSemigroup' G` then there is an expression of type `Add' G`. The latter expression can be retrieved using `inferInstance`.
+The `extends` clause makes `AddSemigroup'` inherit the fields from `Add'`, and `add_assoc` is stated in terms of the inherited `+`. If there is an expression of type `AddSemigroup' G` then there is an expression of type `Add' G`.
+
+Such instances are retrieved using the function `inferInstance`, which simply returns its instance argument. An instance argument whose type is not recognized as a type class is rejected by default. This check is disabled by setting the option `checkBinderAnnotations` to `false` in the definition of `inferInstance`. The same option lets us exhibit `inferInstance` as the identity.
 -/
-#print inferInstance
+set_option checkBinderAnnotations false in
+example (α : Sort u) [i : α] : @inferInstance α i = i
+:= rfl
 
 example (G : Type u) [AddSemigroup' G] : Add' G
 := inferInstance
