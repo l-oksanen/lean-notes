@@ -1,0 +1,141 @@
+diff --git a/lakefile.lean b/lakefile.lean
+index a3bfd75..0d0b54f 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -11,6 +11,7 @@ package verso where
+ 
+ @[default_target]
+ lean_lib VersoUtil where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso-util"
+   roots := #[`VersoUtil]
+ 
+@@ -23,28 +24,34 @@ input_dir vendorJs where
+ 
+ @[default_target]
+ lean_lib Verso where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso"
+   roots := #[`Verso]
++  globs := #[.andSubmodules `Verso]
+   needs := #[staticWeb, vendorJs]
+ 
+ @[default_target]
+ lean_lib MultiVerso where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/multi-verso"
+   roots := #[`MultiVerso]
+ 
+ @[default_target]
+ lean_lib VersoSearch where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso-search"
+   -- Rebuild search when JS on disk changes
+   needs := #[staticWeb]
+ 
+ @[default_target]
+ lean_lib VersoBlog where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso-blog"
+   roots := #[`VersoBlog]
+ 
+ @[default_target]
+ lean_lib VersoManual where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso-manual"
+   roots := #[`VersoManual]
+   needs := #[staticWeb]
+@@ -55,6 +62,7 @@ input_file tutorialDefaultCss where
+ 
+ @[default_target]
+ lean_lib VersoTutorial where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso-tutorial"
+   roots := #[`VersoTutorial]
+   needs := #[tutorialDefaultCss]
+@@ -72,6 +80,7 @@ lean_exe «verso» where
+ 
+ @[default_target]
+ lean_lib VersoLiterate where
++  defaultFacets := #[LeanLib.staticFacet]
+   roots := #[`VersoLiterate]
+   srcDir := "src/verso-literate"
+ 
+@@ -83,6 +92,7 @@ lean_exe «verso-literate» where
+ 
+ @[default_target]
+ lean_lib VersoLiterateCode where
++  defaultFacets := #[LeanLib.staticFacet]
+   srcDir := "src/verso-literate-code"
+   roots := #[`VersoLiterateCode]
+ 
+@@ -118,7 +128,6 @@ lean_exe «verso-literate-plan» where
+   srcDir := "src/verso-literate-plan"
+   supportInterpreter := true
+ 
+-@[default_target]
+ lean_lib Tests where
+   srcDir := "src/tests"
+ 
+@@ -128,7 +137,6 @@ lean_exe «verso-tests» where
+   srcDir := "src/tests"
+   supportInterpreter := true
+ 
+-@[default_target]
+ lean_exe «verso-demo» where
+   root := `Main
+   supportInterpreter := true
+@@ -137,7 +145,6 @@ lean_lib UsersGuide where
+   srcDir := "doc"
+   leanOptions := #[⟨`weak.linter.verso.manual.headerTags, true⟩]
+ 
+-@[default_target]
+ lean_exe usersguide where
+   root := `UsersGuideMain
+   supportInterpreter := true
+@@ -147,7 +154,6 @@ lean_lib DemoSite where
+   srcDir := "test-projects/website"
+   roots := #[`DemoSite]
+ 
+-@[default_target]
+ lean_exe demosite where
+   srcDir := "test-projects/website"
+   root := `DemoSiteMain
+@@ -158,7 +164,6 @@ lean_lib DemoTextbook where
+   srcDir := "test-projects/textbook"
+   roots := #[`DemoTextbook]
+ 
+-@[default_target]
+ lean_exe demotextbook where
+   srcDir := "test-projects/textbook"
+   root := `DemoTextbookMain
+@@ -169,29 +174,24 @@ lean_lib PackageManual where
+   srcDir := "test-projects/package-manual"
+   roots := #[`PackageManual]
+ 
+-@[default_target]
+ lean_exe packagedocs where
+   srcDir := "test-projects/package-manual"
+   root := `PackageManualMain
+   supportInterpreter := true
+ 
+ -- An example of a minimal nontrivial custom genre
+-@[default_target]
+ lean_lib SimplePage where
+   srcDir := "test-projects/custom-genre"
+   roots := #[`SimplePage]
+ 
+-@[default_target]
+ lean_exe simplepage where
+   srcDir := "test-projects/custom-genre"
+   root := `SimplePageMain
+   supportInterpreter := true
+ 
+-@[default_target]
+ lean_lib TutorialExample where
+   srcDir := "test-projects/tutorial-test"
+ 
+-@[default_target]
+ lean_exe «tutorial-example» where
+   srcDir := "test-projects/tutorial-test"
+   root := `Main

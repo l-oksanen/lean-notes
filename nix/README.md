@@ -15,7 +15,7 @@ nix-shell nix -A shell
 preprocess-document
 generate-document
 postprocess-document
-python -m http.server -d generated/_out/html-multi
+python -m http.server -d _out/_out/html-multi
 ```
 
 > Notice that entering the shell for the first time requires building mathlib.

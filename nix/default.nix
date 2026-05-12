@@ -1,10 +1,21 @@
+let
+  overlay = final: prev: {
+    leanPackages = prev.leanPackages.overrideScope (
+      lean-final: lean-prev: {
+        md4lean = lean-final.callPackage ./md4lean.nix { };
+        subverso = lean-final.callPackage ./subverso.nix { };
+        verso = lean-final.callPackage ./verso.nix { };
+      }
+    );
+  };
+in
 {
   sources ? import ./npins,
   system ? builtins.currentSystem,
   pkgs ? import sources.nixpkgs {
     inherit system;
     config = { };
-    overlays = [ (import sources.lean-blog { inherit pkgs; }).overlay ];
+    overlays = [ overlay ];
   },
 }:
 let
@@ -36,24 +47,24 @@ rec {
   # Instead we provide our own lakefile.toml and lake-manifest.json.
   # As the lake-manifest.json is empty, it only works if lake gets package-overrides through `--packages=...` as done in `generate-document` and buildLakePackage internally.
   preprocess-document = pkgs.writeShellScriptBin "preprocess-document" ''
-    rm -rf generated
-    mkdir -p generated/Document
+    rm -rf _out
+    mkdir -p _out/Document
     for file in Document/*.lean; do
       echo "Preprocessing $file"
 
       name=$(basename "''${file%.*}")
-      jq -Rsr -f scripts/preprocess.jq <$file >generated/Document/$(basename "$file")
-      echo "import Document.$name" >>generated/Document.lean
+      jq -Rsr -f scripts/preprocess.jq <$file >_out/Document/$(basename "$file")
+      echo "import Document.$name" >>_out/Document.lean
     done
 
-    echo 'import Infra.Preamble' >>generated/Document.lean
-    cat Document.md >>generated/Document.lean
+    echo 'import Infra.Preamble' >>_out/Document.lean
+    cat Document.md >>_out/Document.lean
 
-    cp lean-toolchain generated/
-    cp -rfv verso/* generated/
-    cp ${./lakefile.toml} generated/lakefile.toml
+    cp lean-toolchain _out/
+    cp -rfv verso/* _out/
+    cp ${./lakefile.toml} _out/lakefile.toml
     # Copy empty manifest, lake must be used with --packages
-    cp ${./lake-manifest.json} generated/lake-manifest.json
+    cp ${./lake-manifest.json} _out/lake-manifest.json
   '';
 
   postprocess-document = pkgs.writeShellScriptBin "postprocess-document" ''
@@ -67,7 +78,7 @@ rec {
 
   # This is just for manual use
   generate-document = pkgs.writeShellScriptBin "generate-document" ''
-    pushd generated
+    pushd _out
     lake build --packages=${mkOverridesFile notes.passthru.allLeanDeps} Document
     lake --no-ansi --packages=${mkOverridesFile notes.passthru.allLeanDeps} env lean --run Infra/Main.lean --output _out --verbose
     cp -rfv ../assets/* _out/html-multi/
@@ -92,8 +103,8 @@ rec {
       preBuild = ''
         ${lib.getExe preprocess-document}
 
-        # Move everything from generated back to root for building with buildLakePackage
-        cp -r generated/. .
+        # Move everything from _out back to root for building with buildLakePackage
+        cp -r _out/. .
       '';
 
       postBuild = ''
