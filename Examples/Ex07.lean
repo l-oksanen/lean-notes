@@ -76,9 +76,9 @@ lemma simp_example (α β : Type) (a b : α) (f : α → β)
 
 #print simp_example
 /-
-Apart from `of_eq_true`, `congrFun'`, and `eq_self`, we have seen the concepts appearing in the proof of `simp_example`.
+Apart from `of_eq_true` and `eq_self`, we have seen the concepts appearing in the proof of `simp_example` (`congrFun'` is a non-dependent variant of `congrFun`).
 
-Write `@of_eq_true` and `@congrFun'` in terms of `Eq.rec`.
+Write `@of_eq_true` in terms of `Eq.rec`.
 -/
 -- __Solution__
 set_option pp.notation false in
@@ -87,14 +87,6 @@ set_option pp.notation false in
 
 example (p : Prop)
   : @of_eq_true p = λ h ↦ Eq.rec trivial (Eq.symm h)
-:= rfl
-
-set_option pp.notation false in
-#print congrFun'
-#check congrFun'
-
-example (α : Sort u) (β : Sort v) (f g : α → β)
-  : @congrFun' α β f g = λ h _ ↦ Eq.rec rfl h
 := rfl
 /-
 
@@ -132,24 +124,6 @@ Lean keeps track of axioms used in proofs.
 
 # Congruence
 
-Recall that `congrArg` gives congruence in the argument.
--/
-example
-  (α : Sort u) (β : Sort v) (a b : α) (f : α → β)
-  (h : a = b)
-  : f a = f b
-:= congrArg f h
-/-
-
-Similarly `congrFun'` gives congruence in the function.
--/
-example
-  (α : Sort u) (β : Sort v) (a : α) (f g : α → β)
-  (h : f = g)
-  : f a = g a
-:= congrFun' h a
-/-
-
 Function extensionality can be formulated as an equivalence.
 -/
 example (α β : Type) (f g : α → β)
@@ -157,7 +131,7 @@ example (α β : Type) (f g : α → β)
 := by
   constructor
   · intro h x
-    exact congrFun' h x
+    exact congrFun h x
   · intro h
     funext x
     exact h x
@@ -173,7 +147,7 @@ example (α : Sort u) (β : Sort v) (a b : α) (f g : α → β)
   calc
     f a
     _ = f b := by exact congrArg f h2
-    _ = g b := by exact congrFun' h1 b
+    _ = g b := by exact congrFun h1 b
 /-
 
 
