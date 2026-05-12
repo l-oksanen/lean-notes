@@ -154,11 +154,11 @@ Even natural numbers form a subsemigroup.{margin}[Contrary to the subtype `EvenN
 def evenNat : Subsemigroup ℕ where
   carrier := {n | ∃ m, n = 2 * m}
   mul_mem' :=
-    λ {x y} hx hy ↦
-    let ⟨mx, hmx⟩ := hx
-    let ⟨my, hmy⟩ := hy
-    have : x * y = 2 * (2 * mx * my) := by grind
-    ⟨2 * mx * my, this⟩
+    λ {n₁ n₂} h₁ h₂ ↦
+    let ⟨m₁, hm₁⟩ := h₁
+    let ⟨m₂, hm₂⟩ := h₂
+    have : n₁ * n₂ = 2 * (2 * m₁ * m₂) := by grind
+    ⟨2 * m₁ * m₂, this⟩
 /-
 
 
@@ -166,12 +166,12 @@ def evenNat : Subsemigroup ℕ where
 
 Due to proof irrelevance, two subsemigroups with the same carrier are equal. We give two proofs.
 -/
-def mul_mem {M : Type u} [Mul M] (s : Set M) :=
-  ∀ {a b : M}, a ∈ s → b ∈ s → a * b ∈ s
+def mul_mem {G : Type u} [Mul G] (s : Set G) :=
+  ∀ {a b : G}, a ∈ s → b ∈ s → a * b ∈ s
 
 open Subsemigroup in
 example
-  {M : Type u} [Mul M] {s₁ s₂ : Set M}
+  {G : Type u} [Mul G] {s₁ s₂ : Set G}
   (h₁ : mul_mem s₁) (h₂ : mul_mem s₂) (h : s₁ = s₂)
   : mk s₁ h₁ = mk s₂ h₂
 :=
@@ -179,7 +179,7 @@ example
 
 open Subsemigroup in
 lemma mk_pf_irrel
-  {M : Type u} [Mul M] {s₁ s₂ : Set M}
+  {G : Type u} [Mul G] {s₁ s₂ : Set G}
   (h₁ : mul_mem s₁) (h₂ : mul_mem s₂) (h : s₁ = s₂)
   : mk s₁ h₁ = mk s₂ h₂
 :=
