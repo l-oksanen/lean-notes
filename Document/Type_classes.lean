@@ -197,6 +197,9 @@ example : (2 : N) + (2 : N) = (4 : N) := rfl
 
 
 # Class hierarchy
+%%%
+tag := "sec-class-hierarchy"
+%%%
 
 Lean has parallel hierarchies for additive and multiplicative notation. We will consider the hierarchy rooted at `Add`. The mathematical concept corresponding to the root `Add` is [magma][magma]. A [semigroup][semigroup] is a magma whose binary operation is associative. {index}[extends]
 
