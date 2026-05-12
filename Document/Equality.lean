@@ -4,7 +4,7 @@ Equality
 tag := "sec-equality"
 %%%
 -/
-import Mathlib.Data.Nat.Init
+import Mathlib
 /-
 -/
 -- -show
@@ -44,7 +44,9 @@ inductive Eq' {α : Sort u} (a : α) : α → Prop where
 
 def rfl' {α : Sort u} {a : α} := @Eq'.refl α a
 /-
-These behave identically to {lean}`Eq` and {lean}`rfl` as far as definitional equality is concerned:
+These behave identically to {lean}`Eq` and {lean}`rfl` with respect to all aspects of [definitional equality][definitional-equality], summarized below.
+
+[definitional-equality]: https://lean-lang.org/doc/reference/latest/The-Type-System/#--tech-term-definitional-equality
 
 1. Proof irrelevance
 -/
@@ -85,6 +87,15 @@ example : Eq' (let t := ℕ; t → t) (ℕ → ℕ) := rfl'
 -/
 example (n : ℕ) :
   Eq' (@Nat.rec (λ _ ↦ ℕ) 0 (λ m _ ↦ m) (Nat.succ n)) n
+:= rfl'
+/-
+
+6. Quotient reduction{margin}[We will {ref "sec-quotient-reduction"}[return] to this.]
+-/
+example (α : Sort u) (β : Sort v) (s : Setoid α)
+  (f : α → β) (x : α)
+  (h : ∀ (x y : α), x ≈ y → f x = f y)
+  : Eq' (Quotient.lift f h ⟦x⟧) (f x)
 := rfl'
 /-
 
@@ -205,16 +216,26 @@ example (α : Sort u) (a b c : α) (h1 : a = b) (h2 : b = c)
 := Eq.subst h2 h1
 /-
 
-In Lean, the following substitution is called _congruence_: if `a = b` and `f` is a function, then `f a = f b`.
+In Lean, the following two substitutions are called congruences
+
+* congruence in argument: if `a = b` and `f` is a function, then `f a = f b`,
+* congruence in function: if `f = g` for two functions, then `f a = g a`.
+
 -/
 example
   (α : Sort u) (β : Sort v) (a b : α) (f : α → β)
   (h : a = b)
   : f a = f b
 := Eq.subst (motive := λ x ↦ f a = f x) h rfl
+
+example
+  (α : Sort u) (β : Sort v) (a : α) (f g : α → β)
+  (h : f = g)
+  : f a = g a
+:= Eq.subst (motive := λ φ ↦ f a = φ a) h rfl
 /-
 
-Symmetry, transitivity, and congruence are available as theorems.
+Symmetry, transitivity, and the two congruences are available as theorems.
 -/
 example (α : Sort u) (a b : α) (h : a = b) : b = a
 := Eq.symm h
@@ -229,6 +250,12 @@ example
   (h : a = b)
   : f a = f b
 := congrArg f h
+
+example
+  (α : Sort u) (β : Sort v) (a : α) (f g : α → β)
+  (h : f = g)
+  : f a = g a
+:= congrFun h a
 /-
 
 
