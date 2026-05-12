@@ -1,5 +1,5 @@
 /-
-Coercions
+Coercions and embeddings
 %%%
 tag := "sec-coercions"
 %%%
@@ -11,34 +11,42 @@ When Lean's elaborator encounters an expression with unexpected type, it attempt
 
 As an illustration, consider our versions of natural numbers `Nat'`, with the abbreviation `N`, and integers `Z`.{margin}[We have imported our earlier definitions.]
 
-The following invalid example triggers the coercion mechanism, but instance synthesis fails to find a coercion.
+The following invalid example triggers the coercion mechanism, but instance synthesis fails to find a coercion. The same example becomes valid once a suitable coercion is in place.
 ```lean +error
 example (x : Z) (y : N) : Z := x + y
 ```
 
-We can define a coercion from `N` to `Z` using `Coe` type class.
+A coercion from `N` to `Z` is defined using the type class `Coe`.
 -/
-def Z.ofN (n : N) : Z := ⟦(n, 0)⟧
+#print Coe
 
 instance : Coe N Z where
-  coe := Z.ofN
+  coe := λ n ↦ ⟦(n, 0)⟧
 /-
 
-We can now add expressions inhabiting `N` and `Z`.
+Let us now return to the example triggering the coercion.
 -/
 example (x : Z) (y : N) : Z := x + y
+/-
 
+As a more concrete example, we formulate `1 - 1 = 0` using coercion.
+-/
 example : (1 : N) + (⟦(0, 1)⟧ : Z) = (0 : N)
 := Quotient.sound rfl
 /-
 
+The instance of `Coe N Z` encodes the natural embedding of `N` into `Z`. In what follows, we describe two general techniques to encode embeddings: subtypes and substructures. Substructures build on subsets together with two type classes called `SetLike` and `CoeSort`.
+
 
 # Subtypes
 
-`Subtype` is a structure similar to `Prod`. It takes a predicate as a parameter and comes with syntactic sugar.
+`Subtype` is a structure taking a predicate as a parameter.
 -/
 #print Subtype
+/-
 
+The following syntactic sugar is available.
+-/
 example (α : Sort u) (P : α → Prop) :
   Subtype P = {a : α // P a}
 := rfl
@@ -50,7 +58,7 @@ example (α : Sort u) (P : α → Prop) (a : α) (h : P a) :
   {x : α // P x} := ⟨a, h⟩
 /-
 
-A concrete example is given by the even natural numbers.
+A concrete example is given by the even natural numbers.{margin}[We switch from our version of natural numbers `N` to the standard `ℕ` for the remaining examples. {ref "sec-class-hierarchy"}[Earlier] we did not place `N` in the type class hierarchy of Mathlib, rather we rebuild a small part of the hierarchy. Here we make use of a larger portion of the standard hierarchy.]
 -/
 abbrev EvenNat := {n : ℕ // ∃ m, n = 2 * m}
 
@@ -91,6 +99,12 @@ example (α : Sort u) (P : α → Prop) (a₁ a₂ : α)
   (mk.injEq a₁ h₁ a₂ h₂).mpr h
 /-
 
+In a concrete case, equality can be proven simply by `rfl`.
+-/
+example : (⟨4, ⟨2, rfl⟩⟩ : EvenNat) = ⟨4, ⟨2, by grind⟩⟩
+:= rfl
+/-
+
 
 # Subsets
 
@@ -125,9 +139,9 @@ example : ({1, 2} : Set ℕ) = setOf (λ n ↦ n = 1 ∨ n = 2)
 /-
 
 
-# Algebraic substructures
+# Substructures
 
-A [subsemigroup][subsemigroup] is a structure with two fields: a subset of a semigroup called `carrier` and a proof that the multiplication is closed in the subset.{margin}[In fact, `Subsemigroup` can be used to define a submagma as well. The parent is not assumed to be associative.] This is a typical design pattern for algebraic substructures in Mathlib.
+Mathlib uses a uniform pattern for many substructures: subgroups, subsemigroups, submodules, and so on. Here we focus on [subsemigroups][subsemigroup]. `Subsemigroup` is a structure with two fields: a subset of a semigroup called `carrier` and a proof that the subset is closed under multiplication.{margin}[In fact, `Subsemigroup` can be used to define a submagma as well. The parent is not assumed to be associative.]
 
 [subsemigroup]: https://en.wikipedia.org/wiki/Semigroup#Subsemigroups_and_ideals
 
@@ -135,9 +149,9 @@ A [subsemigroup][subsemigroup] is a structure with two fields: a subset of a sem
 #print Subsemigroup
 /-
 
-Even natural numbers form a subsemigroup, hence a semigroup.
+Even natural numbers form a subsemigroup.{margin}[Contrary to the subtype `EvenNat`, the subsemigroup `evenNat` is not a type, as reflected by the lowercase name.]
 -/
-def EvenNatSg : Subsemigroup ℕ where
+def evenNat : Subsemigroup ℕ where
   carrier := {n | ∃ m, n = 2 * m}
   mul_mem' :=
     λ {x y} hx hy ↦
@@ -145,14 +159,12 @@ def EvenNatSg : Subsemigroup ℕ where
     let ⟨my, hmy⟩ := hy
     have : x * y = 2 * (2 * mx * my) := by grind
     ⟨2 * mx * my, this⟩
-
-example : Semigroup EvenNatSg := inferInstance
 /-
 
 
 ## Equality of subsemigroups
 
-Due to proof irrelevance, two subsemigoups with the same carrier are equal. We give two proofs.
+Due to proof irrelevance, two subsemigroups with the same carrier are equal. We give two proofs.
 -/
 def mul_mem {M : Type u} [Mul M] (s : Set M) :=
   ∀ {a b : M}, a ∈ s → b ∈ s → a * b ∈ s
@@ -179,33 +191,33 @@ lemma mk_pf_irrel
 /-
 
 
-# Coercing to sorts
+# Coercing to subsets
 
-Coercion works from `EvenNatSg` to `Nat`.
+A subsemigroup is identified with its carrier via coercion.
 -/
-example (x : ℕ) (y : EvenNatSg) : ℕ := x + y
-/-
+example (G : Type u) [Semigroup G] (S : Subsemigroup G) :
+  S = S.carrier := rfl
 
-In fact, `EvenNatSg` itself can be coerced into a subtype.
--/
-example : EvenNatSg = {n : ℕ // n ∈ EvenNatSg} := rfl
+example : (evenNat : Set ℕ) = {n | ∃ m, n = 2 * m} := rfl
 /-
-
-The coercion from `EvenNatSg` to `Nat` works via this coercion to a subtype that we study next. Already `n ∈ EvenNatSg` deserves an explanation: `EvenNatSg` is not a set, but its type `Subsemigroup ℕ` carries a `SetLike` instance, which is what licenses the membership notation.
--/
-example (G : Type u) [Semigroup G] :
-  SetLike (Subsemigroup G) G := inferInstance
-/-
-
-The type class `SetLike` has two fields: a function `coe` and a proof that the function is injective.
+Mathlib uses `SetLike` type class to implement such coercion pattern for many substructures. A `SetLike α β` instance says that expressions of type `α` can be viewed as subsets of type `β`. The type class has two fields: a function `coe` from `α` to subsets of `β` and a proof that this function is injective.
 -/
 #print SetLike
 
-example (α : Type u) (β : Type v) [SetLike α β] (a : α) :
-  Set β := SetLike.coe a
+example (α : Type u) (β : Type v) [SetLike α β] :
+  α → Set β := SetLike.coe
 /-
 
-In the case of `Subsemigroup` the function `coe` is given by the projection `carrier`.
+`SetLike` expressions can be coerced into subsets using `coe`.
+-/
+example (α : Type u) (β : Type v) [SetLike α β] (a : α) :
+  Set β := a
+
+example (α : Type u) (β : Type v) [SetLike α β] (a : α) :
+  a = SetLike.coe a := rfl
+/-
+
+In the case of `Subsemigroup`, the function `coe` is given by the projection `carrier`. The full `SetLike` instance bundles this projection with a proof of its injectivity.
 -/
 example (G : Type u) [Semigroup G] :
   SetLike (Subsemigroup G) G := Subsemigroup.instSetLike
@@ -224,28 +236,13 @@ example (G : Type u) [Semigroup G] :
   instSetLike = ⟨carrier, carrier_inj G⟩ := rfl
 /-
 
-`SetLike` expressions can be coerced to subsets.
--/
-example (α : Type u) (β : Type v) [SetLike α β] (a : α) :
-  Set β := a
 
-example (α : Type u) (β : Type v) [SetLike α β] (a : α) :
-  a = {x : β | x ∈ a} := rfl
+# Coercing to sorts
 
-example (G : Type u) [Semigroup G] (S : Subsemigroup G) :
-  Set G := S
-
-example (G : Type u) [Semigroup G] (S : Subsemigroup G) :
-  S = {x : G | x ∈ S} := rfl
-/-
-
-The same `SetLike` expressions can be also coerced to subtypes, when context so requires.
+In addition to subsets, `SetLike` expressions can be coerced into subtypes.
 -/
 example (α : Type u) (β : Type v) [SetLike α β] (a : α) :
   a = {x : β // x ∈ a} := rfl
-
-example (G : Type u) [Semigroup G] (S : Subsemigroup G) :
-  S = {x : G // x ∈ S} := rfl
 /-
 
 Coercion to subtypes uses the general mechanism of coercion to sorts.
@@ -258,11 +255,11 @@ The type class `CoeSort` has a single field called `coe`.
 -/
 #print CoeSort
 
-example (α : Sort u) (β : Sort v) [CoeSort α β] (a : α) :
-  β := CoeSort.coe a
+example (α : Sort u) (γ : Sort w) [CoeSort α γ] :
+  α → γ := CoeSort.coe
 /-
 
-For `SetLike` the `CoeSort` instance is defined using the membership relation.
+For `SetLike`, the `CoeSort` instance is defined using the membership relation.
 -/
 example (α : Type u) (β : Type v) [SetLike α β] :
   CoeSort α (Type v) := SetLike.instCoeSortType
@@ -270,3 +267,13 @@ example (α : Type u) (β : Type v) [SetLike α β] :
 example (α : Type u) (β : Type v) [SetLike α β] :
   SetLike.instCoeSortType = ⟨λ a : α ↦ {x : β // x ∈ a}⟩
 := rfl
+/-
+
+While `evenNat` is not a type, it can be coerced into a subtype, and thus used in contexts where type is expected.
+-/
+example : Semigroup evenNat := inferInstance
+
+example (x : ℕ) (y : evenNat) : ℕ := x + y
+/-
+In both examples `evenNat` is coerced into a subtype using the sort coercion from `SetLike`. The second example then applies a further coercion from the subtype to its parent type `ℕ`. The first example relies on a `Semigroup` instance that Mathlib provides for every subsemigroup.
+-/
