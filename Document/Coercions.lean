@@ -149,7 +149,7 @@ Mathlib uses a uniform pattern for many substructures: subgroups, subsemigroups,
 #print Subsemigroup
 /-
 
-Even natural numbers form a subsemigroup.{margin}[Contrary to the subtype `EvenNat`, the subsemigroup `evenNat` is not a type, as reflected by the lowercase name.]
+Even natural numbers form a subsemigroup.{margin}[Contrary to the subtype `EvenNat`, the subsemigroup `evenNat` is not a type, as reflected by the lowercase name. The proof of `mul_mem'` binds implicit arguments `n₁` and `n₂`. This is needed only to emphasize that `grind` proves an elementary algebraic fact. If `by grind` is used directly in place of `this`, the binder `{n₁ n₂}` and the `have` statement can be omitted.]
 -/
 def evenNat : Subsemigroup ℕ where
   carrier := {n | ∃ m, n = 2 * m}
@@ -161,21 +161,10 @@ def evenNat : Subsemigroup ℕ where
     ⟨2 * m₁ * m₂, this⟩
 /-
 
-
-## Equality of subsemigroups
-
-Due to proof irrelevance, two subsemigroups with the same carrier are equal. We give two proofs.
+Due to proof irrelevance, two subsemigroups with the same carrier are equal.
 -/
 def mul_mem {G : Type u} [Mul G] (s : Set G) :=
   ∀ {a b : G}, a ∈ s → b ∈ s → a * b ∈ s
-
-open Subsemigroup in
-example
-  {G : Type u} [Mul G] {s₁ s₂ : Set G}
-  (h₁ : mul_mem s₁) (h₂ : mul_mem s₂) (h : s₁ = s₂)
-  : mk s₁ h₁ = mk s₂ h₂
-:=
-  (mk.injEq s₁ h₁ s₂ h₂).mpr h
 
 open Subsemigroup in
 lemma mk_pf_irrel
@@ -183,11 +172,7 @@ lemma mk_pf_irrel
   (h₁ : mul_mem s₁) (h₂ : mul_mem s₂) (h : s₁ = s₂)
   : mk s₁ h₁ = mk s₂ h₂
 :=
-  Eq.subst
-    (motive := λ s ↦ ∀ (h : mul_mem s), mk s₁ h₁ = mk s h)
-    h
-    (λ _ ↦ Eq.refl (mk s₁ h₁))
-    h₂
+  (mk.injEq s₁ h₁ s₂ h₂).mpr h
 /-
 
 
@@ -276,4 +261,27 @@ example : Semigroup evenNat := inferInstance
 example (x : ℕ) (y : evenNat) : ℕ := x + y
 /-
 In both examples `evenNat` is coerced into a subtype using the sort coercion from `SetLike`. The second example then applies a further coercion from the subtype to its parent type `ℕ`. The first example relies on a `Semigroup` instance that Mathlib provides for every subsemigroup.
+
+
+# Further proofs
+
 -/
+example : Subsemigroup ℕ where
+  carrier := {n | ∃ m, n = 2 * m}
+  mul_mem' :=
+    λ h₁ h₂ ↦
+    let ⟨m₁, hm₁⟩ := h₁
+    let ⟨m₂, hm₂⟩ := h₂
+    ⟨2 * m₁ * m₂, by grind⟩
+
+open Subsemigroup in
+example
+  {G : Type u} [Mul G] {s₁ s₂ : Set G}
+  (h₁ : mul_mem s₁) (h₂ : mul_mem s₂) (h : s₁ = s₂)
+  : mk s₁ h₁ = mk s₂ h₂
+:=
+  Eq.subst
+    (motive := λ s ↦ ∀ (h : mul_mem s), mk s₁ h₁ = mk s h)
+    h
+    (λ _ ↦ Eq.refl (mk s₁ h₁))
+    h₂
