@@ -8,7 +8,7 @@ import Mathlib.Data.Quot
 import Document.Type_classes
 /-
 
-Quotient types encode [equivalence classes][equivalence-class]. As an example, we construct integers as the quotient set of $`\mathbb N^2` by the equivalence relation $`\sim`, where $`(n_1, k_1) \sim (n_2, k_2)` if and only if $`n_1 + k_2 = n_2 + k_1`.{margin}[Using integers, the relation can be rewritten as $`n_1 - k_1 = n_2 - k_2`.] Positive integers are then given by the equivalence classes $`[(n, 0)]`, $`n \in \mathbb N \setminus \{0\}`, and negative integers by $`[(0, k)]`, $`k \in \mathbb N \setminus \{0\}`.
+Quotient types encode [equivalence classes][equivalence-class]. As an example, we construct integers as the quotient set of $`\mathbb N^2` by the equivalence relation $`\approx`, where $`(n_1, k_1) \approx (n_2, k_2)` if and only if $`n_1 + k_2 = n_2 + k_1`.{margin}[Using integers, the relation can be rewritten as $`n_1 - k_1 = n_2 - k_2`.] Positive integers are then given by the equivalence classes $`[(n, 0)]`, $`n \in \mathbb N \setminus \{0\}`, and negative integers by $`[(0, k)]`, $`k \in \mathbb N \setminus \{0\}`.
 
 [equivalence-class]: https://en.wikipedia.org/wiki/Equivalence_class
 
@@ -186,7 +186,7 @@ example (n k : N)
 
 ## Quotient exactness
 
-The implication opposite to `Quotient.sound` is called `Quotient.exact`. Contrary to `Quotient.sound`, it is a regular theorem, not an axiom.
+The implication converse to `Quotient.sound` is called `Quotient.exact`. Contrary to `Quotient.sound`, it is a regular theorem, not an axiom.
 -/
 example  (α : Sort u) (s : Setoid α) (x y : α)
   (h : (⟦x⟧ : Quotient s) = ⟦y⟧)
