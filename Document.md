@@ -54,13 +54,15 @@ We begin with an encoding of first-order logic using inductive types. This invol
 
 # Relating types
 
-Lean provides several mechanisms for relating types to one another:
+This chapter collects three tools for working with types:
 
-* _Type classes_ let shared structure across types be organized into inheritance hierarchies.
+* _Type classes_ let shared structure across types be organized into hierarchies.
 
-* _Quotient types_ allow formation of a new type by identifying expressions of an existing type under an equivalence relation, together with canonical maps mediating between the two types.
+* _Quotient types_ encode equivalence classes by identifying expressions of an existing type under an equivalence relation.
 
-* _Coercions_ let expressions of one type be used implicitly where another is expected, encoding embeddings between types, for instance.
+* _Coercions_ encode embeddings between types, and more generally, let expressions of one type be used implicitly where another is expected.
+
+Type classes underpin the other two: quotient types are formed from instances of the `Setoid` type class, and coercions are implemented as type class instances at the elaboration stage. Type classes are inductive types with special elaboration-level features, so they require no new kernel-level primitives. Quotient types, by contrast, come with a number of primitives for their formation, the introduction and elimination of quotient expressions, and reasoning about them.
 
 {include 2 Document.Type_classes}
 {include 2 Document.Quotient_types}
