@@ -58,7 +58,7 @@ This chapter collects three tools for working with types:
 
 * _Type classes_ let shared structure across types be organized into hierarchies.
 
-* _Quotient types_ encode equivalence classes by identifying expressions of an existing type under an equivalence relation.
+* _Quotient types_ encode equivalence classes by identifying expressions under an equivalence relation.
 
 * _Coercions_ encode embeddings between types, and more generally, let expressions of one type be used implicitly where another is expected.
 
