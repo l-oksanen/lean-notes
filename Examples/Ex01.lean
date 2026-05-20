@@ -1,29 +1,7 @@
 import Mathlib
 /-
 
-# Proofs using automation
-
--/
-lemma diff_sq (x y : ℝ)
-  : x^2 - y^2 = (x + y) * (x - y)
-:= by
-  grind
-
-#print diff_sq
-#print diff_sq._proof_1_1
-/-
-
-The proof uses
-
-* properties of ℝ as a commutative ring
-* classical logic
-
-The `grind` tactic is similar to modern [SMT][SMT] solvers. It generates proofs by contradiction.
-
-[SMT]: https://en.wikipedia.org/wiki/Satisfiability_modulo_theories
-
-
-## Brahmagupta's identity
+# Brahmagupta's identity
 
 Show [Brahmagupta's identity][brahmagupta].
 
@@ -39,7 +17,7 @@ example (n a b c d : ℝ)
 /-
 
 
-## Woodbury formula
+# Woodbury formula
 
 Show [Woodbury formula][woodbury] for scalars.
 
@@ -55,7 +33,7 @@ example (a c u v : ℝ)
 /-
 
 
-## Linear equations
+# Linear equations
 
 Show
 -/
@@ -83,7 +61,7 @@ np.linalg.solve(A, b)
 ```
 
 
-## Roots of polynomials
+# Roots of polynomials
 
 Show
 -/
@@ -104,7 +82,7 @@ np.roots(coeffs)
 ```
 
 
-## Factorization of multivariate polynomials
+# Factorization of multivariate polynomials
 
 The following example is taken from [SymPy's manual][sympy].
 
@@ -158,77 +136,7 @@ str(sp.factor(p)).replace('**', '^')
 ```
 
 
-# Step by step proofs
-
-Consider the following commutation.
--/
-example (a b c : ℕ)
-  : a * b * c = b * c * a
-:= by grind
-/-
-
-In an abstract form, the commutation reads
--/
-example (G : Type) [Semigroup G] (a b c : G)
-  (h1 : a * b = b * a)
-  (h2 : a * c = c * a)
-  : a * b * c = b * c * a
-:= by grind
-
-#print Semigroup
-/-
-
-[Magma][magma] is a set with a closed binary operation. A [semigroup][semigroup] is a magma whose binary operation is associative. Magma is called `Mul` in Lean.
-
-[magma]: https://en.wikipedia.org/wiki/Magma_(algebra)
-[semigroup]: https://en.wikipedia.org/wiki/Semigroup
-
-We define our own version of `Semigroup`.
--/
-class Semigroup' (G : Type) extends Mul G where
-  mul_assoc : ∀ a b c : G, (a * b) * c = a * (b * c)
-/-
-
-When using this version, we need to write a step by step proof (or implement further automation).
--/
-example (G : Type) [Semigroup' G] (a b c : G)
-  (h1 : a * b = b * a)
-  (h2 : a * c = c * a)
-  : a * b * c = b * c * a
-:= by calc
-  a * b * c
-  _ = b * a * c := by rw [h1]
-  _ = b * (a * c) := by rw [Semigroup'.mul_assoc]
-  _ = b * (c * a) := by rw [h2]
-  _ = b * c * a := by rw [Semigroup'.mul_assoc]
-/-
-
-We can replace the hypotheses `h1` and `h2` by the stronger hypothesis that the semigroup is commutative. Let us start with a single step.
--/
-example (G : Type) [Semigroup' G] (a b c : G)
-  (h : ∀ x y : G, x * y = y * x)
-  : a * b * c = b * a * c
-:= by
-  rw [h a b]
-/-
-
-Show
--/
-example (G : Type) [Semigroup' G] (a b c : G)
-  (h : ∀ x y : G, x * y = y * x)
-  : a * b * c = b * c * a
-:= by
-  -- __Solution__
-  calc
-    a * b * c
-    _ = b * a * c := by rw [h a b]
-    _ = b * (a * c) := by rw [Semigroup'.mul_assoc]
-    _ = b * (c * a) := by rw [h a c]
-    _ = b * c * a := by rw [Semigroup'.mul_assoc]
-/-
-
-
-# Proofs with steps and automation
+# Elementary case of Young's inequality
 
 Show an elementary case of [Young's inequality][young].
 
@@ -242,6 +150,8 @@ lemma elem_young (a b : ℝ) :
   grind
 /-
 
+
+# Peter-Paul inequality
 
 Show [Peter-Paul][peter-paul] inequality.
 
