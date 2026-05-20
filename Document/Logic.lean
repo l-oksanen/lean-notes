@@ -15,10 +15,10 @@ Proving a proposition in Lean amounts to constructing an expression whose type i
 * formula is false: there is no expression of type `p`
 * truth `⊤`: an inductive type with a single constant constructor
 * falsehood `⊥`: an inductive type with no constructors
-* [implication][implication] `→`: function type (as {ref "sec-implication"}[explained] already)
+* [implication][implication] `→`: function type
 * [conjunction][conjunction] `∧`: like {lean}`Prod` but in the universe `Prop`
 * [disjunction][disjunction] `∨`: like {lean}`Sum` but in the universe `Prop`
-* [universal quantification][universal-quantification]: $`\Pi`-type (as {ref "sec-universal-quantification"}[explained] already)
+* [universal quantification][universal-quantification]: $`\Pi`-type
 * [existential quantification][existential-quantification]: an inductive type with a predicate as a parameter
 
 [Curry-Howard]: https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence

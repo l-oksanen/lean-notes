@@ -8,9 +8,22 @@ authorshipNote := "lauri.oksanen@helsinki.fi"
 %%%
 
 
+# Introduction
+
+We will consider [Lean][lean]'s type theory as a language for writing [formal proofs][formal-proof]. The part of Lean that enforces the rules of the type theory is called the kernel. The type theory is designed to be simple, enabling the kernel to remain small. From a foundational perspective, trusting Lean means trusting the correctness of this small kernel.
+
+Expressed directly in kernel primitives, even simple proofs can be very explicit and verbose. The user-facing surface syntax is more implicit and compressed. Elaboration translates surface syntax into primitives, filling in the implicit pieces. Tactics are an especially powerful form of this compression, and it is typical to write proofs as tactic blocks. 
+
+[lean]: https://lean-lang.org/
+[formal-proof]: https://en.wikipedia.org/wiki/Formal_proof
+
+{include 2 Document.Primitives}
+{include 2 Document.Tactic_proofs}
+
+
 # Foundations
 
-We will consider Lean's type theory as a language for writing [formal proofs][formal-proof]. This language is highly expressive while consisting of only a few kinds of expressions.{margin}[For the moment, we omit expressions related to {ref "sec-quotient-types"}[quotient types], and effectively consider a [sublanguage][sublanguage].] Every type is either a universe in the universe hierarchy, a function type, or arises from the type constructor of an inductive type. The remaining expressions can be organized along two axes: 
+Lean is highly expressive language while consisting of only a few kinds of expressions.{margin}[For the moment, we omit expressions related to {ref "sec-quotient-types"}[quotient types], and effectively consider a [sublanguage][sublanguage].] Every type is either a universe in the universe hierarchy, a function type, or arises from the type constructor of an inductive type. The remaining expressions can be organized along two axes: 
 
 ```
 <!--HTML-->
@@ -25,12 +38,10 @@ We will consider Lean's type theory as a language for writing [formal proofs][fo
 </table>
 ```
 
-We begin with an introduction to types and universes. Since our primary goal is to study formal proofs using Lean, the universe of propositions at the bottom of the universe hierarchy plays a central role. The remainder of the chapter then proceeds through functions and inductive types. 
+We present the formation, introduction, elimination, and reduction rules for functions and inductive types. The notion of equality of functions and expressions of an inductive type is also discussed. 
 
-[formal-proof]: https://en.wikipedia.org/wiki/Formal_proof
 [sublanguage]: https://en.wikipedia.org/wiki/Sublanguage
 
-{include 2 Document.Expressions}
 {include 2 Document.Functions}
 {include 2 Document.Inductive_types}
 

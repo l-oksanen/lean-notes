@@ -6,143 +6,126 @@ tag := "sec-functions"
 -/
 --import Mathlib.Data.Nat.Init
 import Mathlib
+import Counterexamples.Girard
 /-
 -/
 -- -show
 namespace Document.Functions
 /-
-We now focus on the $`\lambda`-calculus aspect of Lean's type theory. Functions are given by $`\lambda`-abstractions. {index}[`λ … ↦`]
+We consider a sublanguage which is a [pure type system][pure-type-system]. A pure type system is defined by its universes, the relations between the universes, and a number of rules. The rules govern
 
+[pure-type-system]: https://en.wikipedia.org/wiki/Pure_type_system
+
+* formation: how a type is created
+* introduction: how expressions of a type are created
+* elimination: how expressions of a type are transformed to expressions of another type
+* reduction: how introduction and elimination interact
+
+In the case of Lean, a further category is useful:
+
+* equality: which expressions of a type are equal
+
+These organizational categories are applied here to functions. We later apply them to inductive types and quotient types.
+
+We call the formation rule for function types the {ref "sec-impredicative-lub-rule"}[impredicative maximum rule]. To understand the rule, we must first consider the universes and the relations between them. We introduce also proof irrelevance, since it lies behind an exceptional case of the rule.
+
+
+# Preliminaries
+
+If `a` has type `α`, we say that `a` inhabits `α` and that `α` is inhabited. Recall that `Prop` is the universe of propositions. Each expression inhabiting `Prop` is a type encoding a proposition, and proving a proposition amounts to giving an expression inhabiting the proposition. We call an expression inhabiting a proposition a proof.
+
+Definitional equality includes proof irrelevance: any two proofs of the same proposition are equal.
 -/
-example : ℕ → ℕ := λ n ↦ n + 1
+example (p : Prop) (pf₁ pf₂ : p) : pf₁ = pf₂ := rfl
 /-
-This is syntactic sugar for {index}[fun]
+
+
+## Universes
+%%%
+tag := "sec-universes"
+%%%
+
+
+The universe of propositions `Prop` inhabits the type universe `Type`.
 -/
-example : ℕ → ℕ := fun n => n + 1
+example : Type := Prop
 /-
-Here `ℕ → ℕ` {index}[`→`] is a function type. More generally, a function type is denoted by `α → β`, where `α` and `β` are types specifying the [domain][domain] and [codomain][codomain], respectively. As any other expression, `ℕ → ℕ` has a type.
+`Type` itself inhabits a type.
+-/
+example : Type 1 := Type
+/-
+In fact, there is an infinite sequence of type universes,
+-/
+example : Type 2 := Type 1
+example : Type 3 := Type 2
+/-
+and so on. `Type` is an abbreviation for `Type 0`.
+-/
+example : Type = Type 0 := rfl
+/-
+
+The infinite sequence `Prop, Type 0, Type 1, …` is syntactic sugar for the universe hierarchy `Sort 0, Sort 1, Sort 2, …`. Here `Sort u` is called a universe and `u` is its level. We can verify that the two sequences coincide using {lean}`rfl`.
+-/
+example : Prop = Sort 0 := rfl
+example : Type u = Sort (u + 1) := rfl
+/-
+
+
+## Relations between universes
+
+A pure type system comes with a relation on its universes specifying which universes inhabit each other. In the case of Lean this relation is fully described by
+-/
+example : Sort (u + 1) := Sort u
+/-
+Each universe inhabits the next one and no others.
+
+More generally, each type `α` inhabits `Sort u` for exactly one `u`. We say that this `Sort u` is the universe of `α`.
+
+
+# Formation
+
+An elementary function type is formed as follows.
+-/
+example (α β : Type) : Type := α → β
+/-
+Here the types `α` and `β` specify the [domain][domain] and [codomain][codomain], respectively.
 
 [domain]: https://en.wikipedia.org/wiki/Domain_of_a_function
 [codomain]: https://en.wikipedia.org/wiki/Codomain
 
+The function type
 -/
-example : Type := ℕ → ℕ
+example (α β γ : Type) : Type := α → β → γ
 /-
-
-We can give a name to a function by replacing `example` with `def` {index}[def] and the name.
+is often viewed as encoding the type of functions taking two arguments, the first in `α` and the second in `β`, and yielding an expression in `γ`. For this reason, we occasionally refer to `γ` as the final codomain. Observe that the domain is `α` and the codomain is `β → γ`. The final codomain `γ` is the codomain of the codomain.
 -/
-def plus1 : ℕ → ℕ := λ n ↦ n + 1
-/-
-
-The command `#eval` {index}[#eval] evaluates a given expression.{margin}[Parentheses are not needed in function evaluation syntax.]
--/
-#eval plus1 0
-/-
-Lean is a proof assistant and a functional programming language. One may think of `#check` and `#eval` as reflecting these two sides. We will focus on the proof assistant features and favor a proof over `#eval`.
--/
-example : plus1 0 = 1 := rfl
+example (α β γ : Type) : (α → β → γ) = (α → (β → γ)) := rfl
 /-
 
 
-# Arguments
+## Universe polymorphism
 
-The domain of a function may be specified by annotating its argument with a type. Then Lean can often infer the codomain.
--/
-def plus1₁ := λ n : ℕ ↦ n + 1
-/-
-
-Syntactic sugar allows for introducing the argument using parentheses. {index}[`(… : …)`]
--/
-def plus1₂ (n : ℕ) := n + 1
-/-
-
-Yet another way is to introduce a variable {index}[variable] in the surrounding context.
--/
-variable (n : ℕ) in
-def plus1₃ := n + 1
-/-
-The argument of a function can also be written as `·`. {index}[`·`]
--/
-def plus1₄ := (· + 1)
-/-
-
-The functions `plus1₁`, …, `plus1₄` coincide with `plus1`.
-
-
-## Several arguments
-
-Functions take exactly one argument in Lean. A function taking several arguments can be encoded as a function whose codomain is a function type.
--/
-def add : ℕ → (ℕ → ℕ) := λ n ↦ (λ m ↦ n + m)
-/-
-We refer to a function like this simply as a _function taking two arguments_. Syntactic sugar creates the appearance of functions taking several arguments.
--/
-def add₁ : ℕ → ℕ → ℕ := λ n m ↦ n + m
-/-
-When viewing `add₁` as a function taking two arguments, we refer to the final `ℕ` in `ℕ → ℕ → ℕ` as the codomain. The arguments may be introduced using parentheses.
--/
-def add₂ (n : ℕ) (m : ℕ) : ℕ := n + m
-def add₃ (n m : ℕ) : ℕ := n + m
-/-
-All this is syntactic sugar. The functions `add₁`, …, `add₄` coincide with `add`.
-
-[Partial application][partial-application] produces a function taking the remaining arguments.
-
-[partial-application]: https://en.wikipedia.org/wiki/Partial_application
-
--/
-def plus1' : ℕ → ℕ := add 1
-/-
-
-In contrast, _saturated application_ produces an expression that is not a function.
--/
-example : ℕ := add 1 0
-/-
-
-The following function taking two arguments ignores the second one. {index}[`_`]
--/
-def proj : ℕ → ℕ → ℕ := λ n _ ↦ n
-
-example : proj 0 1 = 0 := rfl
-/-
-
-
-## Types as arguments
-%%%
-tag := "sec-functions-of-types"
-%%%
-
-{ref "sec-expressions"}[Recall] that {lean}`Prod` encodes the Cartesian product. It is a function taking types as arguments.
+{ref "sec-primitives"}[Recall] that {lean}`Prod` encodes the Cartesian product. It is a function taking two types as arguments.
 -/
 example : Type → Type → Type := Prod
 /-
-
-In fact, {lean}`Prod` is a more general [universe-polymorphic][univ-polymorphic] function.{margin}[We will {ref "sec-well-formedness"}[return] to the maximum appearing in the codomain.]
+In fact, {lean}`Prod` is a more general [universe-polymorphic][univ-polymorphic] function.
 
 [univ-polymorphic]: https://lean-lang.org/doc/reference/latest/The-Type-System/Universes/#--tech-term-universe-polymorphism
 
 -/
 example : Type u → Type v → Type (max u v) := Prod
 /-
-
-Here are some variations.
--/
-def Prod₁ (t : Type) (s : Type) : Type := Prod t s
-def Prod₂ : Type → Type → Type := Prod
-def Prod₃ : Type → Type → Type := λ t ↦ λ s ↦ t × s
-def Prod₄ (t s : Type) : Type := t × s
-/-
-The functions `Prod₁`, …, `Prod₄` all coincide with {lean}`Prod`, though, they are instantiated with a fixed level of the universe hierarchy.
+We will {ref "sec-well-formedness"}[return] shortly to the maximum appearing in the final codomain. The difference between the above two examples is that in the first, `Prod` is instantiated with a fixed level of the universe hierarchy. It is a special case of the second.
 
 
 ## Implicit arguments
 
-{ref "sec-definitional-equality-naive"}[Recall] that
-if two expressions are definitionally equal, then their equality can be proven using {lean}`rfl`. In fact, {lean}`rfl` is a function taking two implicit arguments.
+We have used extensively `rfl`. It is a function taking two implicit arguments.
 -/
 #check rfl
 /-
-Implicit arguments {index}[`{… : …}`] are written using curly braces `{…}`. Lean infers their values from context.
+Implicit arguments {index}[`{… : …}`] are written using curly braces `{…}`. They are translated into explicit arguments during elaboration.
 -/
 example : {α : Sort u} → {a : α} → a = a := rfl
 /-
@@ -153,34 +136,21 @@ example : (α : Sort u) → (a : α) → a = a := @rfl
 
 example (α : Sort u) (a : α) : a = a := @rfl α a
 /-
-Like {lean}`Prod`, {lean}`@rfl` is a function taking two arguments: first a type `α`, and then an expression `a` of that type. Its codomain `a = a` depends on the arguments.
-
-The following variant of `rfl` takes one implicit and one explicit argument.
--/
-def refl := λ {α} a ↦ @rfl α a
-
-example : {α : Sort u} → (a : α) → a = a := refl
-/-
-
-Here is an identity function with implicit argument.
--/
-example (α : Type) : {_ : α} → α := λ {a} ↦ a
-/-
+Like {lean}`Prod`, {lean}`@rfl` is a function taking two arguments: first a type `α`, and then an expression `a` of that type. Its final codomain `a = a` depends on the arguments.
 
 
-# Pi-types
+## Pi-types
 %%%
 tag := "sec-pi-types"
 %%%
 
 To simplify the notation, we define the following function taking two arguments, the first of which is implicit.
 -/
-def X {I : Type} (i : I) := i = i
+def X {I : Sort u} (i : I) : Prop := i = i
 /-
-
 Consider the following partial application of {lean}`@rfl`.
 -/
-example (I : Type) : (i : I) → X i := @rfl I
+example (I : Sort u) : (i : I) → X i := @rfl I
 /-
 We refer to `(i : I) → X i` as a [$`\Pi`-type][pi-type] and `i : I` as the _index_ of the $`\Pi`-type.{margin}[$`\Pi`-types are also called dependent function types.]  Such a type can be thought of as encoding an [indexed product][indexed-product] of sets,
 $$`
@@ -198,167 +168,214 @@ All function types are $`\Pi`-types.
 example
   (α : Sort u) (β : Sort v) : (α → β) = ((a : α) → β)
 := rfl
-
+/-
+As the codomain `β` does not depend on the argument `a`, we can rewrite this function type leaving `a` as a hole. {index}[`_`]
+-/
 example
   (α : Sort u) (β : Sort v) : (α → β) = ((_ : α) → β)
 := rfl
 /-
 
-Often codomains do not depend on arguments, as illustrated by functions such as `plus1` and {lean}`Prod`.
--/
-example : (_ : ℕ) → ℕ := plus1
-example : (_ : Type) → ((_ : Type) → Type) := Prod
-/-
 
-
-# Implication
-%%%
-tag := "sec-implication"
-%%%
-
-
-{ref "sec-propositions"}[Recall] that all expressions of type {lean}`Prop` are themselves types. Accordingly, they can occur as the domain or codomain of a function type. The case where both the domain and codomain are expressions of type {lean}`Prop` encodes [logical implication][implication].
-
-[implication]: https://en.wikipedia.org/wiki/Logical_implication
-
--/
-example (p q : Prop) : Prop := p → q
-/-
-
-{ref "sec-propositions"}[Recall] that a proof of a proposition is an expression having the proposition as its type. Function application encodes [modus ponens][modus-ponens]. We give two formulations.
-
-[modus-ponens]: https://en.wikipedia.org/wiki/Modus_ponens
-
--/
-example (p q : Prop) (h1 : p → q) (h2 : p) : q := h1 h2
-
-example
-  (p q : Prop) : (p → q) → p → q
-:=
-  λ h1 ↦ λ h2 ↦ h1 h2
-/-
-
-
-# Impredicative maximum rule
+## Impredicative maximum rule
 %%%
 tag := "sec-impredicative-lub-rule"
 %%%
 
-The type of a function type is governed by the _impredicative maximum rule_:{margin}[This name is not used in the Lean Language Reference; the rule itself is described in [Predicativity][predicativity]. The [level expression][level-expression] `imax u v` is called the impredicative maximum (or least upper bound) of `u` and `v`. We have named the rule accordingly.]
+The formation of a $`\Pi`-type type is governed by the following _impredicative maximum rule_.{margin}[This name is not used in the Lean Language Reference; the rule itself is described in [Predicativity][predicativity]. The [level expression][level-expression] `imax u v` is called the impredicative maximum (or least upper bound) of `u` and `v`. We have named the rule accordingly.]
 
 [predicativity]: https://lean-lang.org/doc/reference/latest/The-Type-System/Universes/#The-Lean-Language-Reference--The-Type-System--Universes--Predicativity
 [level-expression]: https://lean-lang.org/doc/reference/latest/The-Type-System/Universes/?terms=imax#level-expressions
 
 -/
-example (α : Sort u) (β : α → Sort v) :
-  Sort (imax u v) := (a : α) → β a
+def imax_rule (I : Sort u) (X : I → Sort v) :
+  Sort (imax u v) := (i : I) → X i
 /-
 where
 -/
 example : Sort (imax _ 0) = Sort 0 := rfl
+
 example : Sort (imax u (v + 1)) = Sort (max u (v + 1))
 := rfl
 /-
 
-This rule is essential for the consistency of the type theory: certain typed $`\lambda`-calculi that lack such universe-level stratification are subject to [Girard's paradox][girard]. The special case `v = 0` is related to _proof irrelevance_: any two proofs of the same proposition are definitionally equal.
-
-[girard]: https://en.wikipedia.org/wiki/System_U
-
--/
-example (p : Prop) (proof₁ proof₂ : p) : proof₁ = proof₂
-:= rfl
-/-
-Heuristically speaking, since proofs carry no information beyond the fact that a proposition holds, they do not enable the kind of self-referential constructions that lead to paradoxes.
-
-We revisit the earlier example of logical implication and emphasize again that all expressions of type {lean}`Prop` are themselves types.
+Consider the implication.
 -/
 example (p : Prop) (q : Prop) : Prop := p → q
 /-
-The type {lean}`Prop` of `p → q` arises from the impredicative maximum rule. Indeed, since
+The type `Prop` of `p → q` arises from the impredicative maximum rule. Indeed, since
 -/
 example (p : Prop) : Sort 0 := p
 example (q : Prop) : Sort 0 := q
 /-
 the rule applies with `u = 0` and `v = 0`, yielding the type
 -/
-example : Sort 0 = Sort (imax 0 0) := rfl
-example : Sort 0 = Prop := rfl
+example : Sort (imax 0 0) = Prop := rfl
 /-
 
-
-# Universal quantification
-%%%
-tag := "sec-universal-quantification"
-%%%
-
-For any type `α`, the function type with domain `α` and codomain {lean}`Prop` encodes the [predicates][predicate] on `α`.
-
-[predicate]: https://en.wikipedia.org/wiki/Predicate_(logic)
-
--/
-example (α : Sort u) : Sort (max u 1) := α → Prop
-/-
-
-The type `Sort (max u 1)` of `α → Prop` arises from the {ref "sec-impredicative-lub-rule"}[impredicative maximum rule]. Indeed, since
--/
-example : Sort 1 := Prop
-/-
-the rule applies with `v = 1`, yielding `Sort (max u 1)`.
-
-Consider an evaluation of a predicate.
--/
-example (α : Sort u) (P : α → Prop) (a : α) : Prop := P a
-/-
-Since `P a` has type {lean}`Prop`, it is itself a type.{margin}[Once again, all expressions of type {lean}`Prop` are themselves types.]
-In particular, it can occur as the codomain of a $`\Pi`-type. Such types encode [universal quantification][universal-quantification].
-
-[universal-quantification]: https://en.wikipedia.org/wiki/Universal_quantification
-
--/
-example (α : Sort u) (P : α → Prop) : Prop := (a : α) → P a
-/-
-
-The type {lean}`Prop` of `(a : α) → P a` arises from the {ref "sec-impredicative-lub-rule"}[impredicative maximum rule]. Indeed, since
--/
-example (α : Sort u) (P : α → Prop) (a : α) : Sort 0 := P a
-/-
-the rule applies with `v = 0`, yielding the type
--/
-example : Sort 0 = Sort (imax _ 0) := rfl
-example : Sort 0 = Prop := rfl
-/-
-
-Convenient syntactic sugar is provided.
+Let us now consider universal quantification.
 -/
 example
   (α : Sort u) (P : α → Prop)
   : (∀ a : α, P a) = ((a : α) → P a)
 := rfl
 /-
-
-Here is a proof encoding [universal instantiation][universal-instantiation] followed by modus ponens.
-
-[universal-instantiation]: https://en.wikipedia.org/wiki/Universal_instantiation
+The type of predicates on `α` satisfies
 -/
-example (α : Sort u) (P Q : α → Prop)
-  (h1 : ∀ a : α, P a → Q a) (h2 : ∀ a : α, P a)
-  : ∀ a : α, Q a
-:= λ a ↦ h1 a (h2 a)
+example (α : Sort u) : Sort (max u 1) := α → Prop
 /-
-In fact, the proof uses universal instantiation twice: first in the application `h2 a` and then in the partial application `h1 a`.
-
-Recall that {lean}`@rfl` has the following type.
+Here `Sort (max u 1)` arises from impredicative maximum rule. Indeed, since
 -/
-example : (α : Sort u) → (a : α) → a = a := @rfl
+example : Sort 1 := Prop
 /-
-It can be rewritten using universal quantification.
+the rule applies with `v = 1`, yielding `Sort (max u 1)`. The universal quantification, on the other hand, is a proposition.
 -/
-example : ∀ α : Sort u, ∀ a : α, a = a := @rfl
-example : ∀ (α : Sort u) (a : α), a = a := @rfl
+example (α : Sort u) (P : α → Prop) : Prop := (a : α) → P a
+/-
+Here `Prop` arises from the impredicative maximum rule. Indeed, since the evaluation `P a` of a predicate is a proposition,
+-/
+example (α : Sort u) (P : α → Prop) (a : α) : Sort 0 := P a
+/-
+the rule applies with `v = 0` yielding
+-/
+example : Prop = Sort (imax _ 0) := rfl
 /-
 
 
-# Local definitions
+## Girard's paradox
+%%%
+tag := "sec-girard"
+%%%
+
+The impredicative maximum rule relies on the infinite sequence of universes as seen by considering the function type with the same universe as domain and codomain.
+-/
+def pi : Type (w + 1) := Type w → Type w
+/-
+Having an infinite number of universes is not a feature introduced by choice, rather it is the price of consistency. [Certain historical][system-U] pure type systems that lack such stratification are inconsistent.
+
+[system-U]: https://en.wikipedia.org/wiki/System_U
+
+In Lean, violating the impredicative maximum rule would lead to Girard's paradox, formulated as follows.
+-/
+example
+  (π : (Type w → Type w) → Type w)
+  (Λ : {ξ : Type w → Type w} → ((i : Type w) → ξ i) → π ξ)
+  (app : {ξ : Type w → Type w} → π ξ → (i : Type w) → ξ i)
+  (β : ∀
+    {ξ : Type w → Type w}
+    (f : (i : Type w) → ξ i)
+    (x : Type w),
+    app (Λ f) x = f x
+  )
+  : 1 = 0
+:= False.elim (Counterexample.girard π Λ app β)
+/-
+The paradox assumes a formation rule `π`, incompatible with the special case `pi` of the impredicative maximum rule. The codomain of `π` is one level below the universe of `pi`.
+
+In the paradox, `Λ`, `app`, and `β` model $`\lambda`-abstraction, function application, and $`\beta`-reduction, respectively. These concepts are described below. The flawed formation rule `π`, together with `Λ`, `app`, and `β`, leads to the contradiction `1 = 0`.
+
+The special case of `imax`
+-/
+example : Sort (imax _ 0) = Prop := rfl
+/-
+is related to proof irrelevance. Heuristically speaking, since proofs carry no information beyond the fact that a proposition holds, they do not enable the kind of self-referential constructions that lead to paradoxes.{margin}[Restricted elimination, considered {ref "sec-restricted-elimination"}[later], is also necessary for consistency. It is closely related to proof irrelevance.]
+
+
+# Introduction
+
+Functions are introduced by $`\lambda`-abstraction. For instance, the type `α → α` is inhabited for any type `α`.
+-/
+def I₁ {α : Sort u} : α → α := λ x ↦ x
+/-
+Here the $`\lambda`-abstraction `λ x ↦ x` gives the identity function. Here is a variant of the identity function taking an implicit argument.
+-/
+def I₁' {α : Sort u} : {_ : α} → α := λ {x} ↦ x
+/-
+Here are some syntactic variations. {index}[`·`]
+-/
+def I₂ {α : Sort u} (x : α) := x
+
+def I₂' {α : Sort u} {x : α} := x
+
+def I₃ {α : Sort u} := λ x : α ↦ x
+
+variable {α : Sort u} in
+def I₄ (x : α) := x
+
+def I₅ {α : Sort u} : α → α := (·)
+/-
+Observe that the codomain is not specified explicitly in these examples. Lean can infer it based on the domain.
+
+The functions `I₁`, `I₂`, and `I₃` coincide by `rfl`, but the following example is too ambiguous.
+```lean +error
+example {α : Sort u} : I₁ = I₂ := rfl
+```
+To prove the equality, we must provide more information or disable inference of implicit arguments.
+-/
+example {α : Sort u} : (I₁ : α → α) = I₂ := rfl
+
+example : @I₁ = @I₂ := rfl
+/-
+Named arguments allow specifying implicit parameters explicitly. {index}[`(… := …)`]
+-/
+example {α : Sort u} : I₁ (α := α) = I₂ := rfl
+/-
+The implicit variant is even more ambiguous.
+```lean +error
+example {α : Sort u} : I₁' (α := α) = I₂' := rfl
+```
+Nonetheless, the functions `I₁'` and `I₂'` coincide.
+-/
+example : @I₁' = @I₂' := rfl
+/-
+Moreover,
+-/
+example : @I₁ = @I₁' := rfl
+/-
+
+The notation `id` is provided for the identity function.
+-/
+example {α : Sort u} : I₁ (α := α) = id := rfl
+/-
+
+The following function taking two arguments ignores the second one.{margin}[In the context of combinatory logic, this function is called the [combinator K][combinator-K].]
+
+[combinator-K]: https://en.wikipedia.org/wiki/Combinatory_logic#Examples_of_combinators
+
+-/
+def K {α β: Type} : α → β → α := λ x _ ↦ x
+/-
+
+
+# Elimination
+
+Functions are eliminated by application.
+-/
+example (α β : Type) (f : α → β) (a : α) : β := f a
+/-
+More generally,
+-/
+example (I : Sort u) (X : I → Sort v)
+  (f : (i : I) → X i) (i : I) :
+  X i := f i
+/-
+
+[Partial application][partial-application] produces a function taking the remaining arguments.
+
+[partial-application]: https://en.wikipedia.org/wiki/Partial_application
+
+-/
+example (α β γ: Type) (f : α → β → γ) (a : α) : β → γ := f a
+/-
+
+In contrast, _saturated application_ produces an expression that is not a function.
+-/
+example (α β γ: Type) (f : α → β → γ) (a : α) (b : β) :
+  γ := f a b
+/-
+
+
+## Local definitions
 
 Consider the following function.
 -/
@@ -406,7 +423,7 @@ def pq₃ (x : ℕ) :=
 tag := "sec-proof-steps"
 %%%
 
-A typical use of `have` is to isolate steps in proofs. Let us {ref "sec-universal-quantification"}[return] to our earlier example on universal instantiation followed by modus ponens, and isolate the universal instantiation.
+A typical use of `have` is to isolate steps in proofs. Consider the universal instantiation followed by modus ponens.
 -/
 example (α : Sort u) (P Q : α → Prop)
   (h1 : ∀ a : α, P a → Q a) (h2 : ∀ a : α, P a)
@@ -464,15 +481,14 @@ def pq₄ (x : ℕ) : ℕ :=
 /-
 
 There are cases where `let` is applicable but `have` is not.
-
 -/
-def plus1₅ :=
-  let t := ℕ
-  λ x : t ↦ x + 1
+def I₆ {α : Sort u} :=
+  let t := α
+  λ x : t ↦ x
 /-
 
 
-# Reductions of beta, delta, and zeta kind
+# Reduction
 
 {ref "sec-definitional-equality-naive"}[Recall] that having the same normal form is a sufficient condition for two expressions to be definitionally equal. Computing normal forms involves several kinds of reduction, three of which are related to the concepts introduced in this section.
 
@@ -497,22 +513,20 @@ $`\delta`-reduction replaces a defined name by its defining expression.{margin}[
 
 [definitions]: https://lean-lang.org/doc/reference/latest/Definitions/Definitions/#The-Lean-Language-Reference--Definitions--Definitions
 
-While we have so far used `def` only to give names to functions, any expression can be named.
 -/
 def ℕ2 := ℕ × ℕ
 
 example : ℕ2 = (ℕ × ℕ) := rfl
-
-#reduce (types := true) ℕ2
-#reduce (types := true) ℕ × ℕ
 /-
 
-A function such as `plus1` cannot be employed to demonstrate $`\delta`-reduction in isolation. Indeed, the normal form of `plus1` differs from its definition.{margin}[The `#print` command queries information about definitions.] {index}[#print]
+By default, `#reduce` does not reduce inside types.
 -/
-#reduce plus1
-#print plus1
+#reduce ℕ2
 /-
-The normal form of `plus1` is related to the inductive definition of `ℕ`, described {ref "sec-inductive-types"}[later].
+We can force reduction inside types as follows.
+-/
+#reduce (types := true) ℕ2
+/-
 
 
 ## zeta-reduction
@@ -528,16 +542,18 @@ example : (let t := ℕ; t × t) = (ℕ × ℕ) := rfl
 The semicolon is a syntactic device that allows multiple expressions to be written on a single line. Replacing it by a line break leaves the expression intact.
 
 
-# Function eta-equivalence
+# Equality
 %%%
 tag := "sec-function-eta-equivalence"
 %%%
 
 In addition to reduction, definitional equality identifies certain expressions that differ only by trivial abstraction. This identification is called $`\eta`-equivalence. For functions, $`\eta`-equivalence says that a function is definitionally equal to the $`\lambda`-abstraction obtained by applying the function to an argument.
 -/
-example : (λ x ↦ f x) = f := rfl
+example (α : Sort u) (β : Sort v) (f : α → β)
+  : (λ x ↦ f x) = f
+:= rfl
 /-
-The definitional equality of the left and right-hand sides is not based on them having the same normal form. In fact, their normal forms differ.
+The definitional equality of the left and right-hand sides is not based on them having the same normal form. In fact, the left-hand side does not reduce.
 -/
 variable (α : Sort u) (β : Sort v) (f : α → β) in
 #reduce λ x ↦ f x
@@ -547,74 +563,20 @@ Reduction and $`\eta`-equivalence differ in a fundamental way: the former has an
 
 [intensional-extensional]: https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions
 
-
-# Function extensionality
-
-The functions `plus1` and `plus1'` coincide in the sense that they give the same value when applied to the same argument, that is, they are [extensionally][extensionality] equal. However, they are not definitionally equal, because the two terms in the addition are in the opposite orders in their definitions.
-
-[extensionality]: https://lean-lang.org/doc/reference/latest/The-Type-System/Functions/#function-extensionality
-
--/
-example : plus1  = (λ n ↦ n + 1) := rfl
-example : plus1' = (λ n ↦ 1 + n) := rfl
-/-
-
-The following example is invalid.
-
-```lean +error
-example : plus1 = plus1' := rfl
-```
-
-The principle of [functional extensionality][extensionality-principles] holds in Lean.{margin}[We give a proof of `funext` {ref "sec-function-extensionality-proof"}[later].]
+The principle of [functional extensionality][extensionality-principles] holds in Lean, but not by `rfl`.{margin}[We give a proof of `funext` {ref "sec-function-extensionality-proof"}[later].]
 -/
 example (α : Sort u) (β : Sort v) (f g : α → β)
   (h : ∀ (x : α), f x = g x)
   : f = g
 := funext h
 /-
-The principle can be used to show that `plus1` and `plus1'` are indeed equal.{margin}[We omit showing elementary algebraic facts from the first principles and use the [grind][grind] tactic instead.]
-
 [extensionality-principles]: https://en.wikipedia.org/wiki/Extensionality#Extensionality_principles
-[grind]: https://lean-lang.org/doc/reference/latest/The--grind--tactic/
-
--/
-example : plus1 = plus1'
-:=
-  have (n : ℕ) : n + 1 = 1 + n := by grind
-  funext this
-/-
 
 
-# Surface syntax and underlying type theory
-%%%
-tag := "sec-surface-syntax"
-%%%
+# Rules of the type theory
 
+The following rules govern the concepts introduced so far. They constitute a pure type system. For each rule, we first present an example and then its abstract formulation. In the abstract formulations, we write $`\operatorname{Sort}_{u}` for `Sort u`, $`\Pi x : \alpha.\; \beta` for `(x : α) → β x`, and $`\equiv` for definitional equality. Moreover, $`\Gamma` denotes an arbitrary [typing context][typing-context] and $`\beta[x := a]` denotes [substitution][substitution].{margin}[The substitution replaces all free occurrences of $`x` in the expression $`\beta` with the expression $`a`.] We use the [standard notation][typing-rule] for typing rules.
 
-Lean's processing of source code can be divided into several [stages][processing-stages]. For our purposes, the important stages are:
-
-[processing-stages]: https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/
-
-* _Macro expansion_ that removes syntactic sugar.
-* _Elaboration_ that translates the remaining user-facing surface syntax into an underlying basic form.
-* _Kernel checking_ that ensures that the translated expressions follow the rules of the type theory.
-
-For instance, implicit arguments are a part of the surface syntax. They are translated into explicit arguments during elaboration.
-
-In addition to enforcing the rules of the type theory, the kernel implements definitional equality. We have encounted the following aspects of definitional equality.
-
-* Proof irrelevance
-* Function $`\eta`-equivalence
-* $`\beta`-, $`\delta`-, and $`\zeta`-reductions
-
-The type theory is designed to be simple, enabling the kernel to remain small. From a foundational perspective, trusting Lean means trusting the correctness of this small kernel.
-
-
-## Rules of the type theory
-
-The following rules govern the concepts introduced so far. They constitute a [pure type system][pure-type-system]. For each rule, we first present an example and then its abstract formulation. In the abstract formulations, we write $`\operatorname{Sort}_{u}` for `Sort u`, $`\Pi x : \alpha.\; \beta` for `(x : α) → β x`, and $`\equiv` for definitional equality. Moreover, $`\Gamma` denotes an arbitrary [typing context][typing-context] and $`\beta[x := a]` denotes [substitution][substitution].{margin}[The substitution replaces all free occurrences of $`x` in the expression $`\beta` with the expression $`a`.] We use the [standard notation][typing-rule] for typing rules.
-
-[pure-type-system]: https://en.wikipedia.org/wiki/Pure_type_system
 [substitution]: https://en.wikipedia.org/wiki/Lambda_calculus_definition#Substitution
 [typing-context]: https://en.wikipedia.org/wiki/Typing_environment
 [typing-rule]: https://en.wikipedia.org/wiki/Typing_rule
@@ -737,37 +699,11 @@ $$`
 # Further proofs
 
 -/
-example : plus1 = (λ n ↦ n + 1) := rfl
-example : plus1 = plus1₁ := rfl
-example : plus1 = plus1₂ := rfl
-example : plus1 = plus1₃ := rfl
-example : plus1 = plus1₄ := rfl
-example : plus1 = plus1₅ := rfl
-
-example : (ℕ → (ℕ → ℕ)) = (ℕ → ℕ → ℕ) := rfl
-example
-  (α : Sort u) (β : Sort v) (γ : Sort w)
-  : (α → (β → γ)) = (α → β → γ)
-:= rfl
-
-example : add = (λ n m ↦ n + m) := rfl
-example : add = add₁ := rfl
-example : add = add₂ := rfl
-example : add = add₃ := rfl
-
-example : Prod = Prod₁ := rfl
-example : Prod = Prod₂ := rfl
-example : Prod = Prod₃ := rfl
-example : Prod = Prod₄ := rfl
-
-example :
-  ((α : Sort u) → (a : α) → a = a)
-  = (∀ α : Sort u, ∀ a : α, a = a)
-:= rfl
-example :
-  ((α : Sort u) → (a : α) → a = a)
-  = (∀ (α : Sort u) (a : α), a = a)
-:= rfl
+example : @I₁ = @I₂ := rfl
+example : @I₁ = @I₃ := rfl
+example : @I₁ = @I₄ := rfl
+example : @I₁ = @I₅ := rfl
+example : @I₁ = @I₆ := rfl
 
 example : pq = pq₁ := rfl
 example : pq = pq₂ := rfl
