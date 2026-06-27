@@ -12,7 +12,9 @@ authorshipNote := "lauri.oksanen@helsinki.fi"
 
 We will consider [Lean][lean]'s type theory as a language for writing [formal proofs][formal-proof]. The part of Lean that enforces the rules of the type theory is called the kernel. The type theory is designed to be simple, enabling the kernel to remain small. From a foundational perspective, trusting Lean means trusting the correctness of this small kernel.
 
-Expressed directly in kernel primitives, even simple proofs can be very explicit and verbose. The user-facing surface syntax is more implicit and compressed. Elaboration translates surface syntax into primitives, filling in the implicit pieces. Tactics are an especially powerful form of this compression, and it is typical to write proofs as tactic blocks. 
+Expressed directly in kernel primitives, even simple proofs can be very verbose. The user-facing surface syntax is more implicit and compressed. Elaboration translates surface syntax into primitives, filling in the implicit pieces. Tactics are an especially powerful form of this compression, and it is typical to write proofs as tactic blocks. 
+
+We begin by outlining the most important kernel primitives, namely the type and proposition universes, functions, and inductive types, as well as the kernel-level notion of definitional equality. We then take a brief look at tactics.
 
 [lean]: https://lean-lang.org/
 [formal-proof]: https://en.wikipedia.org/wiki/Formal_proof
