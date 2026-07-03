@@ -4,8 +4,6 @@ Nix is a package manager and a build system.
 It's an alternative to installing dependencies and building the document.
 The goal is to be hermetic and reproducible.
 
-As mathlib is currently not in the nix cache ([see this issue](https://github.com/NixOS/nixpkgs/issues/510957)) one has to build and cache it locally.
-
 ## Developing locally
 
 [default.nix](./default.nix) provides required dependencies as well as convenience scripts `*-document`:
@@ -18,7 +16,7 @@ postprocess-document
 python -m http.server -d _out/_out/html-multi
 ```
 
-> Notice that entering the shell for the first time requires building mathlib.
+> Notice that entering the shell for the first time requires downloading (or building) mathlib and other artifacts.
 
 Alternatively one can use [direnv](https://github.com/nix-community/nix-direnv) to load the shell upon entering the repository.
 

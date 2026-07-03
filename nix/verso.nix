@@ -5,14 +5,15 @@
   plausible,
   md4lean,
   subverso,
+  illuminate,
 }:
 let
-  version = "4.29.0";
+  version = "4.30.0";
   src = fetchFromGitHub {
     owner = "leanprover";
     repo = "verso";
     tag = "v${version}";
-    hash = "sha256-5eo/xbPNbS9/Bv7tfnXz52mUo/CXG6mnLWg8h6mg6FE=";
+    hash = "sha256-zreaafs3z+mb5CcoZ7QN4/goCyiixKxqnscyqnZJutM=";
   };
 in
 buildLakePackage {
@@ -27,5 +28,6 @@ buildLakePackage {
     plausible
     md4lean
     subverso
+    illuminate
   ];
 }

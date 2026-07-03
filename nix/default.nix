@@ -4,6 +4,7 @@ let
       lean-final: lean-prev: {
         md4lean = lean-final.callPackage ./md4lean.nix { };
         subverso = lean-final.callPackage ./subverso.nix { };
+        illuminate = lean-final.callPackage ./illuminate.nix { };
         verso = lean-final.callPackage ./verso.nix { };
       }
     );
@@ -86,6 +87,24 @@ rec {
     popd
   '';
 
+  mathlib-with-counterexamples = pkgs.leanPackages.buildLakePackage {
+    pname = "mathlib-with-counterexamples";
+    inherit (pkgs.leanPackages.mathlib) version meta;
+    leanPackageName = pkgs.leanPackages.mathlib.passthru.lakePackageName;
+    leanDeps = pkgs.leanPackages.mathlib.passthru.allLeanDeps;
+
+    dontUnpack = true;
+
+    buildTargets = [
+      "Counterexamples"
+    ];
+
+    preBuild = ''
+      cp -r ${pkgs.leanPackages.mathlib}/. .
+      chmod -R u+w .
+    '';
+  };
+
   notes =
     let
       # Recursively get lean deps
@@ -126,7 +145,7 @@ rec {
 
       leanDeps = [
         pkgs.leanPackages.verso
-        pkgs.leanPackages.mathlib
+        mathlib-with-counterexamples
       ];
     };
 
